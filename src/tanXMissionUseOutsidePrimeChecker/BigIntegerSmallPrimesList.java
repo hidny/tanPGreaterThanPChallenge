@@ -4,12 +4,18 @@ import java.math.BigInteger;
 
 import UtilityFunctions.UtilityFunctions;
 
-public class BigIntegerPrimesList {
+public class BigIntegerSmallPrimesList {
 
 	public static BigInteger listOfPrimes[] = null;
 	
+
+	//Samuel Li recommended the quick check if X is prime should only check with primes up to 10^6.
+	//A bigger number might be better when the number of digits of X is high, but 
+	//I like seeing the program solve the small digits quickly...
+	//Let me be emotional...
+	//https://samuelj.li/blog/2020-08-20-prime-tangents/
+	
 	public static void initialize() {
-		
 		int primes[] = UtilityFunctions.getListofPrimeUpToN(1000000);
 		
 		listOfPrimes = new BigInteger[primes.length];

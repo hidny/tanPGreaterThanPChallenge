@@ -12,10 +12,7 @@ public class PI {
 	public static void main(String args[]) {
 		getPiForNDigits(100500);
 	}
-	//Trusting:
-	//https://decimal.info/digits-of-pi/value-of-pi-to-5000-decimal-places.html
 
-	
 	//Trusting:
 	// https://www.piday.org/million/
 

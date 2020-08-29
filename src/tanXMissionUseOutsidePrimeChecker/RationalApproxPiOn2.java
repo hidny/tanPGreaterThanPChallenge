@@ -4,52 +4,9 @@ import java.math.BigInteger;
 
 import UtilityFunctions.Fraction;
 
-//FROM: https://introcs.cs.princeton.edu/java/92symbolic/RationalApprox.java
-// https://math.stackexchange.com/questions/2354993/rational-approximation-of-pi-where-denominator-lies-in-a-b
-
-/******************************************************************************
- *  Compilation:  javac RationalApprox.java
- *  Execution:    java RationalApprox x
- *
- *  Compute the best rational approximation to x using Stern-Brocot
- *  tree.
- *
- *  % java RationalApprox 2.71828182845904523536028747135
- *  1 2 3 5/2 8/3 11/4 19/7 49/18 68/25 87/32 106/39 193/71 685/252 878/323 ...
- *
- *  % java RationalApprox 3.14159265358979323846264338328
- *  1 2 3 13/4 16/5 19/6 22/7 179/57 201/64 223/71 245/78 267/85 289/92 311/99 333/106
-
- *  % java RationalApprox 
- *  0.142857
- *  1/4 1/5 1/6 1/7 71429/500004 71430/500011 ...
- *
- *  Reference: Discrete Mathematics, 116-123.
- *
- ******************************************************************************/
-
-
- //TODO: what if I do (2*a+c)/(2*b+d)
-//Find tan.... maybe approx: 1/cos(x)
-//https://blogs.ubc.ca/infiniteseriesmodule/units/unit-3-power-series/taylor-series/the-maclaurin-expansion-of-cosx/
-//Nah...
-
-//For x near pi where x <pi:
-//(1-cosx)/cos x < tanx < 1/cosx
-
-
-//What if I did mediant between 1 and 3.5?
-//what if I trial less ideal candidates?
-
 
 public class RationalApproxPiOn2 {
 
-
-	//LOL: apparently 355/113 is really really close to pi... 
-	//TODO: fix this! (skip a bunch of mediant iterations!) (See other TODO for details)
-	// That's slowing everything down!
-	
-	
 	public static final int ONE_THOUSAND = 1000;
 	public static final int HALF_ONE_THOUSAND = 500;
 
@@ -58,9 +15,6 @@ public class RationalApproxPiOn2 {
 	//The numerator I use for PI should be at least 3 times the length of the numerator of the rational approx to pi: 
 	public static final double PI_PRECISION_FACTOR = 4.0;
 	
-	
-
-	public static long millerRobinStageIndex = 0;
 	
 	public static int NUM_CPUS = 4;
 	public static boolean useIterationIndex[] = new boolean[NUM_CPUS];
@@ -106,9 +60,13 @@ public class RationalApproxPiOn2 {
          // compute next possible rational approximation of
     	  // A/B = pi/2 where A&B coprime, A/B < pi/2, and B is odd.
 
+    	  //Instead of just finding the next mediant, find the one that's right before a streak
+    	  // of left mediants or right mediants:
+    	  //left mediant steak amount = floor(tmp1)
           BigInteger tmp1 = left.getDenominator().multiply(currentPrecisePiOver2.getNumerator())
           .subtract(left.getNumerator().multiply(currentPrecisePiOver2.getDenominator()));
-          
+
+    	  //left mediant steak amount = floor(tmp2)
           BigInteger tmp2 = right.getNumerator().multiply(currentPrecisePiOver2.getDenominator())
                   .subtract(right.getDenominator().multiply(currentPrecisePiOver2.getNumerator()));
           
@@ -138,55 +96,55 @@ public class RationalApproxPiOn2 {
 	      	  }
 	      	}
 	      	
+
+        	BigInteger D = right.getDenominator();
+        	
+	      	//Split the work by CPU index
+	      	//(so I could run this program on multiple CPUs at once)
             if(useIterationIndex[numIterApproachingFromLeft % NUM_CPUS]) {
 	            
             	System.out.println("**Seach for solution here**");
     	      	
             	Fraction trial = null;
 	            
-            	//TODO: prove j>1 means it won't work...
-	            for(int j=0; j<n2 && j<4; j++) {
-	            //for(int j=0; j<n2; j++) {
-	            	trial = new Fraction((right.getNumerator().multiply(new BigInteger((n2 - j) + ""))).add(left.getNumerator()),
-	                		(right.getDenominator().multiply(new BigInteger((n2 - j) + ""))).add(left.getDenominator()));
+        		
+	            for(int j=0; j<n2; j++) {
+	            	
+
+	            	BigInteger curA = (right.getNumerator().multiply(new BigInteger((n2 - j) + ""))).add(left.getNumerator());
+	            	BigInteger curB = (right.getDenominator().multiply(new BigInteger((n2 - j) + ""))).add(left.getDenominator());
+
+	            	
+	            	if(j > 0) {
+	            		
+	            		//I worked out this formula from pen & paper:
+	            		//I found that:
+	            		//If tan(A) > B
+	            		// and (A+kC)/(B+kD) is also a mediant (where C/D is the mediant on the right side)
+	            		// then: k*A < B + k*D
+	            		// Therefore: A < B/k + D (divide k)
+	            		//lazy approx:
+	            		// Therefore A < B + D (don't divide by k because lazy)
+	            		
+	            		
+	            		//But what if (A+kC)/(D+kD) simplifies and tan((A+kC)/s) > (A+kC)/s?
+	            		//Answer: It doesn't simplify! See: Stern–Brocot trees
+	            		//"The Stern-Brocot tree provides an enumeration of all positive rational numbers via mediants in lowest terms, obtained purely by iterative computation of the mediant according to a simple algorithm."
+	            		//https://en.wikipedia.org/wiki/Mediant_(mathematics)
+	            		
+	            		if(curA.compareTo(curB.add(D) ) > 0) {
+	            			break;
+	            		}
+	            		System.out.print("J past the rough formula: " + j);
+	            	}
+	            	
+	            	trial = new Fraction(curA, curB);   		;
 	            	
 	            	
 	            	//AX + B(pi/2) < 0 but B has to be odd or else tanX will be a very small number...
 	            	if(trial.getDenominator().mod(new BigInteger("2")).equals(BigInteger.ONE)) {
 	            		
-	            		boolean checkedThatItsNotWithinRange = ExtremeTanXCalculator.attemptTanXCheckUsePiApproxNoDoublePiOn2(trial, currentPrecisePiOver2
-	            				,  (j < n2 - 2), j);
-	            		/*
-	            		//Section whose goal is to figure out when to cut out wasteful trials...
-	                	//So far, I didn't find contenders when j > 2, but I didn't prove they doen't exist
-	               
-	            		if(checkedThatItsNotWithinRange ) {
-	
-	                    	//IF: C - C/(A*(A+C)) -D*(pi/2) > 0
-	                    	//THEN: if current iteration doesn't fit, next one won't either!
-	                    	
-	                    	//Untested formula for breaking earlier:
-	                    	Fraction C = new Fraction(right.getNumerator(), BigInteger.ONE);
-	                		Fraction D = new Fraction(right.getDenominator(),  BigInteger.ONE);
-	                		
-	                		Fraction A = new Fraction(trial.getNumerator(), BigInteger.ONE);
-	                		
-	                		Fraction oneOverA = new Fraction(BigInteger.ONE, trial.getNumerator());
-	                		Fraction secondFractor = Fraction.divide(C, Fraction.plus(C, A));
-	                		
-	                		Fraction CFractionPart = Fraction.mult(oneOverA, secondFractor);
-	                		
-	                		Fraction Cpart = Fraction.minus(C, CFractionPart);
-	                		
-	                		
-	                		Fraction DPiOver2 = Fraction.mult(D, currentPrecisePiOver2);
-	                		
-	                		if(Fraction.minus(Cpart, DPiOver2).greaterThan0()) {
-	                			System.out.println("Breaking! j=" + j + " n2 = " + n2);
-	                			break;
-	                		}
-	            		} //End of break checker
-	            	*/
+	            		ExtremeTanXCalculator.attemptTanXCheckUsePiApproxNoDoublePiOn2(trial, currentPrecisePiOver2, j);
 	            		
 	            	} //End of check X in rang
 
@@ -194,13 +152,16 @@ public class RationalApproxPiOn2 {
 	            
             }//END of IF iteration index
            
-            left =  new Fraction((right.getNumerator().multiply(new BigInteger(n2 + ""))).add(left.getNumerator()),
-            		(right.getDenominator().multiply(new BigInteger(n2 + ""))).add(left.getDenominator()));
+            BigInteger nextA = (right.getNumerator().multiply(new BigInteger(n2  + ""))).add(left.getNumerator());
+        	BigInteger nextB = (right.getDenominator().multiply(new BigInteger(n2 + ""))).add(left.getDenominator());
+
+            left =  new Fraction(nextA, nextB);
         	
             
     	 } // End of approaching the mediants on the left
 
     	  
+    	  //DEBUG print after size of A in A/B increases:
 		 if(prevSizeDebug < left.getNumerator().toString().length()) {
 	
 		  	 int numeratorSize = left.getNumerator().toString().length();
@@ -238,8 +199,14 @@ public class RationalApproxPiOn2 {
  	  System.out.println("end Checkpoint");
    }
 
-   //Found another prime!
-   //(thanks to the people you gave me the hint)
+
+
+  //Unsettling thoughts I didn't address:
+   //TODO: what if I do (2*a+c)/(2*b+d)
+  //What if I did mediant between 1 and 3.5? Would I find other solutions?
+  //what if I trial less ideal candidates?
+  
+   
    /*
     * 
 Samuel Li

@@ -40,19 +40,19 @@ public class ExtremeTanXCalculator {
 	public static String tmpFileName = "testNumber.txt";
 
 	public static void initializeListOfPrimes() {
-		BigIntegerPrimesList.initialize();
+		BigIntegerSmallPrimesList.initialize();
 	}
 	
 	public static final BigInteger TWO = new BigInteger("2");
 	
 	public static Process process = null;
 	
-	public static boolean attemptTanXCheckUsePiApproxNoDoublePiOn2(Fraction piOn2ApproxToDeriveX, Fraction currentPrecisePiOn2, boolean tryingToBreak, int j) {
+	public static boolean attemptTanXCheckUsePiApproxNoDoublePiOn2(Fraction piOn2ApproxToDeriveX, Fraction currentPrecisePiOn2, int j) {
 
 			BigInteger X = piOn2ApproxToDeriveX.getNumerator();
 
 			//Quickly filter filter out non-primes O(n)
-			if(BigIntegerPrimesList.isProbPrime(X) == false) {
+			if(BigIntegerSmallPrimesList.isProbPrime(X) == false) {
 				return false;
 			}
 
@@ -61,10 +61,16 @@ public class ExtremeTanXCalculator {
 				return true;
 			}
 			
+			//I have yet to see j -> 2 or higher, but couldn't disprove it's existence
+			//I did convince myself that it would be rare though...
 			System.out.println("j -> " + j);
 			
-			//Use external program to do a primality test.
+			//Probable prime check:
+			
+			//Used external program to do a primality test.
 			//It's around 10x faster than the implementation I came up with.
+			//I used Samual Li's program. (If you can't beat 'em, join 'em)
+			// https://samuelj.li/blog/2020-08-20-prime-tangents/
 			try {
 				boolean foundProbPrime = false;
 				if(process != null) {
@@ -86,27 +92,11 @@ public class ExtremeTanXCalculator {
 				}
 				
 				
-				
 				printNumberToFile(X);
-				//TODO: Maybe I should write to file and then process?
 				process = new ProcessBuilder("C:\\Users\\Michael\\Desktop\\pfgw_win_4.0.1\\distribution\\pfgw64.exe",tmpFileName).start();
 				
-				//TODO: Yes!
-				/*java.io.IOException: Cannot run program "C:\Users\Michael\Desktop\pfgw_win_4.0.1\distribution\pfgw64.exe": CreateProcess error=206, The filename or extension is too long
-						at java.lang.ProcessBuilder.start(ProcessBuilder.java:1041)
-						at tanXMissionUseOutsidePrimeChecker.ExtremeTanXCalculator.attemptTanXCheckUsePiApproxNoDoublePiOn2(ExtremeTanXCalculator.java:77)
-						at tanXMissionUseOutsidePrimeChecker.RationalApproxPiOn2.main(RationalApproxPiOn2.java:155)
-						at cpus.RunCPU4.main(RunCPU4.java:11)
-					Caused by: java.io.IOException: CreateProcess error=206, The filename or extension is too long
-						at java.lang.ProcessImpl.create(Native Method)
-						at java.lang.ProcessImpl.<init>(ProcessImpl.java:385)
-						at java.lang.ProcessImpl.start(ProcessImpl.java:136)
-						at java.lang.ProcessBuilder.start(ProcessBuilder.java:1022)
-						... 3 more
-						*/
 				
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -123,6 +113,7 @@ public class ExtremeTanXCalculator {
 			    writer.close();
 			}
 	
+	//O(n^2) check if tanX > X
 	public static boolean XisWithinRange(Fraction piOn2ApproxToDeriveX, Fraction currentPrecisePiOn2) {
 		
 		Fraction A = new Fraction(piOn2ApproxToDeriveX.getNumerator(), BigInteger.ONE);
@@ -149,6 +140,11 @@ public class ExtremeTanXCalculator {
 		return false;
 	}
 
+
+	//TODO: Repurpose this function to double check tan p > p:
+	//This function isn't being used because I found a faster check
+	//This is O(n^3) and the faster check is O(n^2)
+	
 	//Function to double check solutions after I found them:
 	//pre: x is near pi.
 	//post: return 1 /cos x
@@ -163,14 +159,14 @@ public class ExtremeTanXCalculator {
 	}
 	
 	
+	
 	//I made it figure out when it has enough info to just stop so it could go slightly faster.	
 	public static Fraction cosApprox(Fraction x, Fraction cosGoalNumber, Fraction currentPrecisePiOn2, int numDigitsPrecision) {
 		
 		if(Fraction.minus(x, currentPrecisePiOn2).greaterThan0() == true) {
 			
-			System.out.println("in cosApprox: X seems slightly too big (i.e. tan x is negative), skipping");
-			
-			//TODO: maybe we don't need this check anymore??
+			System.out.println("ERROR: in cosApprox: X seems slightly too big (i.e. tan x is negative). Don't do that!");
+
 			System.exit(1);
 			return Fraction.ONE;
 		}
@@ -199,7 +195,7 @@ public class ExtremeTanXCalculator {
 					signIsPositive = false;
 				}
 
-				//TODO: approx based on size of factorial... (nah)
+				//TODO: approx based on size of factorial... (nah...)
 				xPowerN = Fraction.mult(xPowerN, xSquared);
 				xPowerN = approx(xPowerN, numDigitsPrecision);
 				
