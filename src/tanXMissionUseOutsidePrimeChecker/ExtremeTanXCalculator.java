@@ -3,11 +3,17 @@ package tanXMissionUseOutsidePrimeChecker;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 import UtilityFunctions.Fraction;
@@ -37,10 +43,20 @@ It has 1017 digits, the first 10 of which are 2308358707.
 public class ExtremeTanXCalculator {
 
 	
-	public static String tmpFileName = "testNumber.txt";
+	public static String tmpFileName = "testNumbers.txt";
+	public static PrintWriter writer = null;
 
 	public static void initializeListOfPrimes() {
 		BigIntegerSmallPrimesList.initialize();
+	}
+	
+	public static void intializeFile() {
+		try {
+			writer = new PrintWriter(new File(tmpFileName));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public static final BigInteger TWO = new BigInteger("2");
@@ -72,7 +88,8 @@ public class ExtremeTanXCalculator {
 			//I used Samual Li's program. (If you can't beat 'em, join 'em)
 			// https://samuelj.li/blog/2020-08-20-prime-tangents/
 			try {
-				boolean foundProbPrime = false;
+				
+				/*boolean foundProbPrime = false;
 				if(process != null) {
 					InputStream is = process.getInputStream();
 					InputStreamReader isr = new InputStreamReader(is);
@@ -89,7 +106,7 @@ public class ExtremeTanXCalculator {
 				
 				if(foundProbPrime) {
 					System.out.println("Found probably prime!");
-				}
+				}*/
 				
 				
 				printNumberToFile(X);
@@ -106,11 +123,11 @@ public class ExtremeTanXCalculator {
 	public static void printNumberToFile(BigInteger number) 
 			  throws IOException {
 		
-		System.out.println("Printing to file");
-			    PrintWriter writer = new PrintWriter(new File(tmpFileName));
-			    writer.write(number.toString());
+				System.out.println("Printing to file");
 			    
-			    writer.close();
+			    writer.write(number.toString() + "\n");
+			    writer.flush();
+			    
 			}
 	
 	//O(n^2) check if tanX > X
